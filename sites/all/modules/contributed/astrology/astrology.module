@@ -1,0 +1,398 @@
+<?php
+/**
+ * @file
+ * The astrology module allows users to access their astrological information
+ * It is based on specific birth data (location, date and time).
+ *
+ * @copyright Copyright (c) 2013 Peter Needle.  All rights reserved.
+ * @author Peter Needle
+ */
+
+// ********************************************************************/
+// * Drupal Hooks
+// ********************************************************************/
+
+/**
+ * Implements hook_help(). =============================================================
+ */
+function astrology_help($path, $args) {
+	switch ($path){
+		case 'admin/help#astrology' : {
+			$output = '<h3>'.t('About').'</h3>';
+			$output .= '<p>'.t('The Astrology module makes it easy to access personalized astrological information.').'</p>';
+			return $output;
+			break;
+		}
+	}
+}
+
+/**
+ * Implements hook_permission(). // Takes no parameters =======================================================
+ */
+function astrology_permission() {
+	return array(
+		'administer astrology' => array(
+			'title' => t('Administer Astrology'),
+			'description' => t('Perform administrative tasks associated with the Astrology module'),
+		),
+	);
+}
+
+/**
+ * Implements hook_menu(). =============================================================
+ */
+function astrology_menu() {  // Takes no parameters  http://goo.gl/C9f81
+	$items = array();   // initialize empty array, uses return
+	
+// Admin configuration group.	
+	$items['admin/config/astrology'] = array(
+		'title' => 'Astrology',
+		'description' => 'Administer Astrology',
+		'access arguments' => array('administer astrology'),
+	);
+
+// Admin configuration settings. 	
+	$items['admin/config/astrology/manage'] = array(
+		'title' => 'Astrology settings',
+		'description' => 'Manage Astrology settings and configurations.',
+		'access arguments' => array('administer astrology'),
+		'page callback' => 'drupal_get_form',  // displays webpage when user visits path
+		'page arguments' => array('astrology_admin_settings_form'),  // page identifier
+	);
+return $items;
+}
+
+/**
+ * Implements hook_form(). =============================================================
+ */
+
+function astrology_admin_settings_form($node, &$form_state) {
+	$form = array();  // Remember to include a return statement at end
+	
+	$form['overview'] = array( // FormAPI uses # parameters
+		'#markup' => t('This interface allows administrators to manage general Astrology settings'),
+		'#prefix' => '<p>', // used to wrap form element in an html tag
+		'#suffix' => '</p>',
+	);
+/*	
+	$form['name_first'] = array(
+		'#type' => 'textfield',
+		'#title' => t('First Name'),
+		'#default_value' => t(''),
+		'#size' => 60,
+		'#maxlength' => 128,
+		'#required' => TRUE,
+	);
+
+	$form['name_last'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Last Name'),
+		'#default_value' => t(''),
+		'#size' => 60,
+		'#maxlength' => 128,
+		'#required' => TRUE,
+	);
+
+	$form['birth_city'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Birth City'),
+		'#default_value' => t(''),
+		'#size' => 50,
+		'#maxlength' => 50,
+		'#required' => TRUE,
+	);
+
+	$form['birth_state'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Birth State'),
+		'#default_value' => t(''),
+		'#size' => 10,
+		'#maxlength' => 10,
+		'#required' => TRUE,
+	);
+
+	$form['natal_sun'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Natal Sun position'),
+		'#default_value' => t(''),
+		'#size' => 7,
+		'#maxlength' => 7,
+		'#required' => TRUE,
+	);
+
+	$form['natal_moon'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Natal Moon position'),
+		'#default_value' => t(''),
+		'#size' => 7,
+		'#maxlength' => 7,
+		'#required' => TRUE,
+	);
+
+	$form['natal_asc'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Natal Ascendent position'),
+		'#default_value' => t(''),
+		'#size' => 7,
+		'#maxlength' => 7,
+		'#required' => TRUE,
+	);
+*/
+	return system_settings_form($form);
+}
+
+/**
+ * Validates Astrology admin settings. =============================================================
+ */
+
+/*
+function astrology_admin_settings_form_validate($form, &$form_state) {
+  // Validate text entries.
+  if (!_astrology_validate_names($name_first)) {
+    form_set_error('astrology_name_first', t('Invalid entry for first name.'));
+  }
+  if (!_astrology_validate_names($name_last)) {
+    form_set_error('astrology_name_last', t('Invalid entry for last name.'));
+  }
+  if (!_astrology_validate_names($birth_city)) {
+    form_set_error('astrology_birth_city', t('Invalid entry for birth city.'));
+  }
+ if (!_astrology_validate_state($birth_state)) {
+    form_set_error('astrology_birth_state', t('Invalid entry for birth state.'));
+  } 
+
+  // Validate data entry for First, Last City, State and Sun.
+  if ($name_first == '') {
+    form_set_error('astrology_name_first', t('Entry for first name is missing.'));
+  }
+  if ($name_last == '') {
+    form_set_error('astrology_name_last', t('Entry for last name is missing.'));
+  }
+  if ($birth_city == '') {
+    form_set_error('astrology_birth_city', t('Entry for birth city is missing.'));
+  }
+  if ($birth_state == '') {
+    form_set_error('astrology_birth_state', t('Entry for birth state is missing.'));
+  }
+  if ($natal_sun == '') {
+    form_set_error('astrology_natal_sun', t('Entry for natal Sun is missing.'));
+  }
+}
+*/
+
+/**
+ * Implements hook_form_alter().
+ */
+
+function astrology_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'astrology_node_form':{
+      $form['#validate'][] = 'astrology_astrology_node_form_validate';
+      break;
+    }
+  }
+}
+
+/**
+ * Validates Astrology content type.
+ */
+
+function astrology_astrology_node_form_validate($form, &$form_state) {
+  // Validate first name.
+  $name_first = $form_state['values']['astrology_name_first'][LANGUAGE_NONE][0]['value'];
+  if (!_astrology_validate_names($name_first) && ($name_first != '')) {
+    form_set_error('astrology_name_first', t('First name must be capitalized.'));
+  }
+  if ($name_first == '') {
+    form_set_error('astrology_name_first', t('First name field is required.'));
+  }
+
+  // Validate last name.
+  $name_last = $form_state['values']['astrology_name_last'][LANGUAGE_NONE][0]['value'];
+  if (!_astrology_validate_names($name_last) && ($name_last != '')) {
+    form_set_error('astrology_name_last', t('Last name must be capitalized.'));
+  }
+  if ($name_last == '') {
+    form_set_error('astrology_name_last', t('Last name field is required.'));
+  }
+
+  // Validate city of birth.
+  $birth_city = $form_state['values']['astrology_birth_city'][LANGUAGE_NONE][0]['value'];
+  if (!_astrology_validate_names($birth_city) && ($birth_city != '')) {
+    form_set_error('astrology_birth_city', t('Birth city must be capitalized.'));
+  }
+  if ($birth_city == '') {
+    form_set_error('astrology_birth_city', t('Birth city field is required.'));
+  }
+
+  // Validate state of birth.
+  $birth_state = $form_state['values']['astrology_birth_state'][LANGUAGE_NONE][0]['value'];
+	$i = 0;
+	switch ($birth_state) {
+		case "AL": break;
+		case "AK": break;
+		case "AZ": break;
+		case "AR": break;
+		case "CA": break;
+		case "CO": break;
+		case "CT": break;
+		case "DE": break;
+		case "FL": break;
+		case "GA": break;
+		case "HI": break;
+		case "ID": break;
+		case "IL": break;
+		case "IN": break;
+		case "IA": break;
+		case "KS": break;
+		case "KY": break;
+		case "LA": break;
+		case "ME": break;
+		case "MD": break;
+		case "MA": break;
+		case "MI": break;
+		case "MN": break;
+		case "MS": break;
+		case "MO": break;
+		case "MT": break;
+		case "NE": break;
+		case "NV": break;
+		case "NH": break;
+		case "NJ": break;
+		case "NM": break;
+		case "NY": break;
+		case "NC": break;
+		case "ND": break;
+		case "OH": break;
+		case "OK": break;
+		case "OR": break;
+		case "PA": break;
+		case "RI": break;
+		case "SC": break;
+		case "SD": break;
+		case "TN": break;
+		case "TX": break;
+		case "UT": break;
+		case "VT": break;
+		case "VA": break;
+		case "WA": break;
+		case "WV": break;
+		case "WI": break;
+		case "WY": break;
+		default: $i = 1;
+	}
+  if ($i == 1) {
+    form_set_error('astrology_birth_state', t('A valid, 2-letter capitalized state code required.'));
+  }
+  if ($birth_state == '') {
+    form_set_error('astrology_birth_state', t('Birth state field is required.'));
+  }
+
+  // Validate Sun position.
+	$natal_sun = $form_state['values']['astrology_natal_sun'][LANGUAGE_NONE][0]['value'];
+	$value = $natal_sun;
+	$length = strlen($value);
+	$sign = substr($value, 2, 3);
+	$degree = substr($value, 0, 2);
+	$minute = substr($value, -2);
+
+  if (!_astrology_validate_sign($sign) && ($natal_sun != '')) {
+    form_set_error('astrology_natal_sun', t('Valid Sun sign is required. The first 3 letters of the Sun sign, in capital letters.'));
+  }
+  if ($natal_sun == '') {
+    form_set_error('astrology_natal_sun', t('Sun position field is required.'));
+  }
+  if (!_astrology_validate_degree($degree) && ($natal_sun != '')) {
+    form_set_error('astrology_natal_sun', t('Valid entry required.'));
+  }
+  if (!_astrology_validate_minute($minute) && ($natal_sun != '')) {
+    form_set_error('astrology_natal_sun', t('Valid entry required.'));
+  }
+
+  // Validate Moon position.
+	$natal_moon = $form_state['values']['astrology_natal_moon'][LANGUAGE_NONE][0]['value'];
+	$value = $natal_moon;
+	$length = strlen($value);
+	$sign = substr($value, 2, 3);
+	$degree = substr($value, 0, 2);
+	$minute = substr($value, -2);
+
+  if (!_astrology_validate_sign($sign) && ($natal_moon != '')) {
+    form_set_error('astrology_natal_moon', t('Valid Moon sign is required. The first 3 letters of the Moon sign, in capital letters.'));
+  }
+  if ($natal_moon == '') {
+    form_set_error('astrology_natal_moon', t('Moon position field is required.'));
+  }
+  if (!_astrology_validate_degree($degree) && ($natal_moon != '')) {
+    form_set_error('astrology_natal_moon', t('Valid entry required.'));
+  }
+  if (!_astrology_validate_minute($minute) && ($natal_moon != '')) {
+    form_set_error('astrology_natal_moon', t('Valid entry required.'));
+  }
+
+  // Validate Ascendent position.
+	$natal_asc = $form_state['values']['astrology_natal_asc'][LANGUAGE_NONE][0]['value'];
+	$value = $natal_asc;
+	$length = strlen($value);
+	$sign = substr($value, 2, 3);
+	$degree = substr($value, 0, 2);
+	$minute = substr($value, -2);
+
+  if (!_astrology_validate_sign($sign) && ($natal_asc != '')) {
+    form_set_error('astrology_natal_asc', t('Valid Ascendent sign is required. The first 3 letters of the Ascendent sign, in capital letters.'));
+  }
+  if ($natal_asc == '') {
+    form_set_error('astrology_natal_asc', t('Ascendent position field is required.'));
+  }
+  if (!_astrology_validate_degree($degree) && ($natal_asc != '')) {
+    form_set_error('astrology_natal_asc', t('Valid entry required.'));
+  }
+  if (!_astrology_validate_minute($minute) && ($natal_asc != '')) {
+    form_set_error('astrology_natal_asc', t('Valid entry required.'));
+  }
+}
+
+/**
+ * Determine if a name is valid.
+ *
+ * @param string $value
+ *   The value to be tested.
+ *
+ * @return boolean
+ *   TRUE if correctly formatted.
+ */
+function _astrology_validate_names($value) { // Tests whether input starts with an uppercase character.
+	$name_regex = "/^(?=[A-Z]{1})/";
+	return preg_match($name_regex, $value) ? TRUE : FALSE;
+}
+
+function _astrology_validate_sign($sign) { // Tests sign validity.
+	$i = 0;
+	switch ($sign) {
+		case "ARI": break;
+		case "TAU": break;
+		case "GEM": break;
+		case "CAN": break;
+		case "LEO": break;
+		case "VIR": break;
+		case "LIB": break;
+		case "SCO": break;
+		case "SAG": break;
+		case "CAP": break;
+		case "AQU": break;
+		case "PIS": break;
+		default: $i = 1;
+	}
+	return ($i == 0) ? TRUE : FALSE;
+}
+
+function _astrology_validate_degree($degree) { // Tests for valid degree
+	$degree_regex = "/[0-2]{1}[0-9]{1}/";
+	return preg_match($degree_regex, $degree) ? TRUE : FALSE;
+}
+
+function _astrology_validate_minute($minute) { // Tests for valid minute
+	$minute_regex = "/[0-5]{1}[0-9]{1}/";
+	return preg_match($minute_regex, $minute) ? TRUE : FALSE;
+}
+

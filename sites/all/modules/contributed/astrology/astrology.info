@@ -1,0 +1,5 @@
+name = Astrology
+description = Allows users to access personalized astrological information and have it displayed in one or more blocks.
+core = 7.x
+version = 7.x-1.0-dev
+configure = admin/config/astrology/manage
